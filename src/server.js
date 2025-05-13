@@ -4,9 +4,9 @@ import express from 'express';
 import pino from 'pino-http';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import path from 'path';
+import path from 'node:path';
 import { fileURLToPath } from 'url';
-
+import redoc from 'redoc-express';
 
 import { getEnvVar } from './utils/getEnvVar.js';
 import { getAllStudents, getStudentById } from './services/students.js';
@@ -30,13 +30,25 @@ export const startServer = () => {
       },
     })
   );
+
   app.use(express.static(path.join(__dirname, 'public')));
 
-  // === all routes middleware ===
+  // === / (головна сторінка) ===
   app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
   });
 
+  // === /docs (Redoc UI) ===
+  const swaggerPath = path.resolve('src', 'docs', 'swagger.json');
+
+  app.get('/docs', redoc({
+    title: 'Exocriador API Docs 🦎',
+    specUrl: '/swagger.json',
+  }));
+
+  app.get('/swagger.json', (req, res) => {
+    res.sendFile(swaggerPath);
+  });
 
   // === /students ===
   app.get('/students', async (req, res, next) => {
@@ -46,7 +58,7 @@ export const startServer = () => {
         status: 200,
         message: "Successfully found students!",
         data: students
-    });
+      });
     } catch (err) {
       next(err);
     }
@@ -62,18 +74,22 @@ export const startServer = () => {
         return res.status(404).json({ message: 'Student not found' });
       }
 
-      res.status(200).json({ data: student });
+      res.status(200).json({
+        status: 200,
+        message: `Successfully found student with id ${studentId}!`,
+        data: student
+      });
     } catch (err) {
       next(err);
     }
   });
 
-  // === 404 middleware ===
+  // === 404 Not Found ===
   app.use((req, res) => {
     res.status(404).json({ message: 'Not found' });
   });
 
-  // === 500 middleware ===
+  // === 500 Server Error ===
   app.use((err, req, res, next) => {
     console.error('Server error:', err);
     res.status(500).json({
@@ -83,6 +99,7 @@ export const startServer = () => {
   });
 
   app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`🚀 Server is running on port ${PORT}`);
+    console.log(`📘 API Docs: http://localhost:${PORT}/docs`);
   });
 };
