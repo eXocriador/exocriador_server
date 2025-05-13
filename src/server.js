@@ -4,9 +4,15 @@ import express from 'express';
 import pino from 'pino-http';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
 
 import { getEnvVar } from './utils/getEnvVar.js';
 import { getAllStudents, getStudentById } from './services/students.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -24,16 +30,23 @@ export const startServer = () => {
       },
     })
   );
+  app.use(express.static(path.join(__dirname, 'public')));
+
   // === all routes middleware ===
   app.get('/', (req, res) => {
-    res.json({ message: 'Hey yo!' });
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
   });
+
 
   // === /students ===
   app.get('/students', async (req, res, next) => {
     try {
       const students = await getAllStudents();
-      res.status(200).json({ data: students });
+      res.status(200).json({
+        status: 200,
+        message: "Successfully found students!",
+        data: students
+    });
     } catch (err) {
       next(err);
     }
@@ -62,7 +75,7 @@ export const startServer = () => {
 
   // === 500 middleware ===
   app.use((err, req, res, next) => {
-    console.error('Server error:', err); // лог в консоль
+    console.error('Server error:', err);
     res.status(500).json({
       message: 'Something went wrong',
       error: err.message,
