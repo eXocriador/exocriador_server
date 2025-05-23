@@ -1,7 +1,7 @@
  // src/db/models/student.js
  import { model, Schema } from 'mongoose';
 
- const studentsSchema = new Schema(
+ const studentSchema = new Schema(
    {
      name: {
        type: String,
@@ -32,4 +32,4 @@
    },
  );
 
- export const StudentsCollection = model('students', studentsSchema);
+ export const StudentsCollection = model('student', studentSchema);
